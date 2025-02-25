@@ -23,6 +23,7 @@
 
 <body>
   @include('component.sidebar')
+  @include('component.navbar')
 
   @yield('content')
 
