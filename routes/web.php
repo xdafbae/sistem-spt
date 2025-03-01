@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SptController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\UserManagementController;
@@ -71,4 +72,40 @@ Route::middleware('auth')->group(function () {
     // Assign Permission to Role
     Route::get('/permissions/assign-to-role', [RolePermissionController::class, 'assignPermissionToRoleForm'])->name('permissions.assign-to-role-form');
     Route::post('/permissions/assign-to-role', [RolePermissionController::class, 'assignPermissionToRole'])->name('permissions.assign-to-role');
+
+
+    // SPT Routes
+    Route::middleware(['auth'])->group(function () {
+        Route::get('spts', [SptController::class, 'index'])->name('spts.index');
+
+        // Karyawan routes
+        Route::middleware(['role:karyawan'])->group(function () {
+            Route::get('spts/create', [SptController::class, 'create'])->name('spts.create');
+            Route::post('spts', [SptController::class, 'store'])->name('spts.store');
+            Route::get('spts/{spt}/edit', [SptController::class, 'edit'])->name('spts.edit');
+            Route::put('spts/{spt}', [SptController::class, 'update'])->name('spts.update');
+        });
+
+        // Operator routes
+        Route::middleware(['role:operator'])->group(function () {
+            Route::get('spts/{spt}/verify', [SptController::class, 'verify'])->name('spts.verify');
+            Route::put('spts/{spt}/verify', [SptController::class, 'verifyUpdate'])->name('spts.verify.update');
+        });
+
+        // Atasan routes
+        Route::middleware(['role:atasan'])->group(function () {
+            Route::get('spts/{spt}/approve', [SptController::class, 'approve'])->name('spts.approve');
+            Route::put('spts/{spt}/approve', [SptController::class, 'approveUpdate'])->name('spts.approve.update');
+        });
+
+        // Common routes
+        Route::get('spts/{spt}', [SptController::class, 'show'])->name('spts.show');
+        Route::get('spts/{spt}/print', [SptController::class, 'print'])->name('spts.print');
+
+        // API untuk mendapatkan NIP
+        Route::get('api/get-nip', [SptController::class, 'getNip'])->name('api.get-nip');
+
+        Route::get('/api/users/search', [App\Http\Controllers\Api\UserController::class, 'search'])
+            ->name('api.users.search');
+    });
 });

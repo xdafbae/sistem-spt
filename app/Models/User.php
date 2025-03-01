@@ -24,6 +24,8 @@ class User extends Authenticatable
         'password', // Password pengguna
         'no_hp', // Nomor handphone pengguna
         'nip', // NIP pengguna
+        'pangkat',
+        'jabatan',
     ];
 
     /**
@@ -55,5 +57,11 @@ class User extends Authenticatable
             return 'nip'; // Karyawan login menggunakan NIP
         }
         return 'email'; // Role lain login menggunakan email
+    }
+
+    public function spts()
+    {
+        return $this->belongsToMany(Spt::class, 'spt_user')
+                    ->withTimestamps();
     }
 }

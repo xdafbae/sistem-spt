@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
 use App\Models\User;
@@ -31,8 +30,8 @@ class UserManagementController extends Controller
                     return $user->roles->pluck('name')->implode(', ');
                 })
                 ->addColumn('action', function ($user) {
-                    $editBtn = '<button type="button" data-id="'.$user->id.'" class="btn btn-sm btn-primary edit-user-btn">Edit</button>';
-                    $deleteBtn = '<button type="button" data-id="'.$user->id.'" class="btn btn-sm btn-danger delete-user-btn ms-2">Hapus</button>';
+                    $editBtn = '<button type="button" data-id="'.$user->id.'" class="btn btn-sm btn-primary edit-user-btn"><i class="fas fa-edit"></i></button>';
+                    $deleteBtn = '<button type="button" data-id="'.$user->id.'" class="btn btn-sm btn-danger delete-user-btn ms-2"><i class="fas fa-trash"></i></button>';
                     return '<div class="d-flex">' . $editBtn . $deleteBtn . '</div>';
                 })
                 ->rawColumns(['action'])
@@ -51,6 +50,8 @@ class UserManagementController extends Controller
             'password' => ['required', Password::defaults()],
             'no_hp' => 'required|string|max:15',
             'nip' => 'nullable|string|max:20|unique:users',
+            'pangkat' => 'nullable|string|max:100',
+            'jabatan' => 'nullable|string|max:100',
             'role' => 'required|exists:roles,name',
         ]);
 
@@ -64,6 +65,8 @@ class UserManagementController extends Controller
             'password' => Hash::make($request->password),
             'no_hp' => $request->no_hp,
             'nip' => $request->nip,
+            'pangkat' => $request->pangkat,
+            'jabatan' => $request->jabatan,
         ]);
 
         $user->assignRole($request->role);
@@ -71,22 +74,22 @@ class UserManagementController extends Controller
         return response()->json(['success' => true, 'message' => 'User created successfully']);
     }
 
-    public function show($id)
+    public function show(User $user)
     {
-        $user = User::with('roles')->findOrFail($id);
+        $user->load('roles');
         return response()->json($user);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, User $user)
     {
-        $user = User::findOrFail($id);
-
         $validator = Validator::make($request->all(), [
             'nama' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,'.$id,
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
             'password' => ['nullable', Password::defaults()],
             'no_hp' => 'required|string|max:15',
-            'nip' => 'nullable|string|max:20|unique:users,nip,'.$id,
+            'nip' => 'nullable|string|max:20|unique:users,nip,'.$user->id,
+            'pangkat' => 'nullable|string|max:100',
+            'jabatan' => 'nullable|string|max:100',
             'role' => 'required|exists:roles,name',
         ]);
 
@@ -99,6 +102,8 @@ class UserManagementController extends Controller
             'email' => $request->email,
             'no_hp' => $request->no_hp,
             'nip' => $request->nip,
+            'pangkat' => $request->pangkat,
+            'jabatan' => $request->jabatan,
         ];
 
         if ($request->filled('password')) {
@@ -113,11 +118,10 @@ class UserManagementController extends Controller
         return response()->json(['success' => true, 'message' => 'User updated successfully']);
     }
 
-    public function destroy($id)
+    public function destroy(User $user)
     {
-        $user = User::findOrFail($id);
         $user->delete();
-
         return response()->json(['success' => true, 'message' => 'User deleted successfully']);
     }
 }
+

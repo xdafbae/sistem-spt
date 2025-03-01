@@ -16,11 +16,13 @@
                         <table class="table align-items-center mb-0" id="users-table" width="100%">
                             <thead>
                                 <tr>
-                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">No</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">ID</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Name</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Email</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Phone</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">NIP</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Pangkat</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Jabatan</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Role</th>
                                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
                                 </tr>
@@ -76,6 +78,16 @@
                         <label for="nip" class="form-control-label">NIP</label>
                         <input type="text" class="form-control" id="nip" name="nip">
                     </div>
+
+                    <div class="form-group">
+                        <label for="pangkat" class="form-control-label">Pangkat</label>
+                        <input type="text" class="form-control" id="pangkat" name="pangkat">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="jabatan" class="form-control-label">Jabatan</label>
+                        <input type="text" class="form-control" id="jabatan" name="jabatan">
+                    </div>
                     
                     <div class="form-group">
                         <label for="role" class="form-control-label">Role</label>
@@ -117,11 +129,7 @@
     </div>
 </div>
 
-<!-- Add Toastr CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-<!-- Add Toastr JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-
+@push('scripts')
 <script>
     $(document).ready(function() {
         // Initialize DataTable with debug mode
@@ -137,22 +145,16 @@
                 }
             },
             columns: [
-            { 
-                data: null, // Kolom ini tidak terikat pada data spesifik dari server
-                name: 'no', // Nama kolom untuk server-side processing (opsional)
-                render: function(data, type, row, meta) {
-                    // Menghasilkan nomor urut berdasarkan indeks baris dan pagination
-                    return meta.row + meta.settings._iDisplayStart + 1;
-                },
-                orderable: false // Nonaktifkan pengurutan untuk kolom nomor urut
-            },
-            { data: 'nama', name: 'nama' },
-            { data: 'email', name: 'email' },
-            { data: 'no_hp', name: 'no_hp' },
-            { data: 'nip', name: 'nip' },
-            { data: 'role', name: 'role' },
-            { data: 'action', name: 'action', orderable: false, searchable: false }
-        ]
+                { data: 'id', name: 'id' },
+                { data: 'nama', name: 'nama' },
+                { data: 'email', name: 'email' },
+                { data: 'no_hp', name: 'no_hp' },
+                { data: 'nip', name: 'nip' },
+                { data: 'pangkat', name: 'pangkat' },
+                { data: 'jabatan', name: 'jabatan' },
+                { data: 'role', name: 'role' },
+                { data: 'action', name: 'action', orderable: false, searchable: false }
+            ]
         });
 
         // Add User Button Click
@@ -183,6 +185,8 @@
                     $('#email').val(response.email);
                     $('#no_hp').val(response.no_hp);
                     $('#nip').val(response.nip);
+                    $('#pangkat').val(response.pangkat);
+                    $('#jabatan').val(response.jabatan);
                     if(response.roles && response.roles.length > 0) {
                         $('#role').val(response.roles[0].name);
                     }
@@ -268,5 +272,6 @@
         }
     });
 </script>
+@endpush
 @endsection
 
