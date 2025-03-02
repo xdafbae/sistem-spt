@@ -101,6 +101,7 @@ Route::middleware('auth')->group(function () {
         // Common routes
         Route::get('spts/{spt}', [SptController::class, 'show'])->name('spts.show');
         Route::get('spts/{spt}/print', [SptController::class, 'print'])->name('spts.print');
+        Route::get('spts/{spt}/export-word', [SptController::class, 'exportWord'])->name('spts.export-word');
 
         // API untuk mendapatkan NIP
         Route::get('api/get-nip', [SptController::class, 'getNip'])->name('api.get-nip');

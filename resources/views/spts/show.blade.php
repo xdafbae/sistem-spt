@@ -3,93 +3,217 @@
 @section('content')
 <div class="container">
     <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Detail SPT</h5>
-            <div>
-                @if($spt->status == 'Selesai')
-                <a href="{{ route('spts.print', $spt->id) }}" class="btn btn-secondary" target="_blank">
-                    <i class="fas fa-print"></i> Cetak
-                </a>
-                @endif
-                <a href="{{ route('spts.index') }}" class="btn btn-primary">Kembali</a>
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Detail SPT</h5>
+                <div>
+                    @if($spt->status == 'Selesai')
+                        <div class="btn-group">
+                            <a href="{{ route('spts.print', $spt->id) }}" class="btn btn-secondary" target="_blank">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </a>
+                            <a href="{{ route('spts.export-word', $spt->id) }}" class="btn btn-secondary">
+                                <i class="fas fa-file-word"></i> Word
+                            </a>
+                        </div>
+                    @endif
+
+                    @if(auth()->user()->hasRole('karyawan') && $spt->status == 'Dikembalikan' && $spt->user_id == auth()->id())
+                        <a href="{{ route('spts.edit', $spt->id) }}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                    @endif
+
+                    @if(auth()->user()->hasRole('operator') && in_array($spt->status, ['Menunggu Verifikasi', 'Dikembalikan']))
+                        <a href="{{ route('spts.verify', $spt->id) }}" class="btn btn-warning">
+                            <i class="fas fa-check"></i> Verifikasi
+                        </a>
+                    @endif
+
+                    @if(auth()->user()->hasRole('atasan') && $spt->status == 'Diverifikasi Oleh Operator')
+                        <a href="{{ route('spts.approve', $spt->id) }}" class="btn btn-success">
+                            <i class="fas fa-check-double"></i> Setujui
+                        </a>
+                    @endif
+
+                    <a href="{{ route('spts.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Kembali
+                    </a>
+                </div>
             </div>
         </div>
+
         <div class="card-body">
             @if($spt->catatan)
-            <div class="alert alert-warning">
-                <strong>Catatan:</strong> {{ $spt->catatan }}
-            </div>
-            @endif
-            
-            <div class="row mb-3">
-                <div class="col-md-3 font-weight-bold">Nomor Surat</div>
-                <div class="col-md-9">{{ $spt->nomor_surat }}</div>
-            </div>
-            
-            <div class="row mb-3">
-                <div class="col-md-3 font-weight-bold">Tanggal Pengajuan</div>
-                <div class="col-md-9">{{ $spt->tanggal_pengajuan->format('d-m-Y') }}</div>
-            </div>
-            
-            <div class="row mb-3">
-                <div class="col-md-3 font-weight-bold">Status</div>
-                <div class="col-md-9">
-                    <span class="badge 
-                        @if($spt->status == 'Menunggu Verifikasi') bg-warning 
-                        @elseif($spt->status == 'Diverifikasi Oleh Operator') bg-info 
-                        @elseif($spt->status == 'Dikembalikan') bg-danger 
-                        @elseif($spt->status == 'Selesai') bg-success 
-                        @endif">
-                        {{ $spt->status }}
-                    </span>
+                <div class="alert alert-warning">
+                    <strong><i class="fas fa-info-circle"></i> Catatan:</strong> {{ $spt->catatan }}
                 </div>
-            </div>
-            
-            <div class="row mb-3">
-                <div class="col-md-3 font-weight-bold">Nama</div>
-                <div class="col-md-9">{{ $spt->nama }}</div>
-            </div>
-            
-            <div class="row mb-3">
-                <div class="col-md-3 font-weight-bold">NIP</div>
-                <div class="col-md-9">{{ $spt->nip }}</div>
-            </div>
-            
-            <div class="row mb-3">
-                <div class="col-md-3 font-weight-bold">Tanggal Mulai</div>
-                <div class="col-md-9">{{ $spt->tanggal_mulai->format('d-m-Y') }}</div>
-            </div>
-            
-            <div class="row mb-3">
-                <div class="col-md-3 font-weight-bold">Tanggal Selesai</div>
-                <div class="col-md-9">{{ $spt->tanggal_selesai->format('d-m-Y') }}</div>
-            </div>
-            
-            <div class="row mb-3">
-                <div class="col-md-3 font-weight-bold">Dasar</div>
-                <div class="col-md-9">{!! $spt->dasar !!}</div>
-            </div>
-            
-            <div class="row mb-3">
-                <div class="col-md-3 font-weight-bold">Tujuan</div>
-                <div class="col-md-9">{!! $spt->tujuan !!}</div>
+            @endif
+
+            <!-- Informasi Umum -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Informasi Umum</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td width="35%">Nomor Surat</td>
+                                    <td width="5%">:</td>
+                                    <td><strong>{{ $spt->nomor_surat }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>Tanggal Pengajuan</td>
+                                    <td>:</td>
+                                    <td>{{ $spt->tanggal_pengajuan->format('d F Y') }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Diajukan Oleh</td>
+                                    <td>:</td>
+                                    <td>{{ $spt->creator->nama }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td width="35%">Status</td>
+                                    <td width="5%">:</td>
+                                    <td>
+                                        <span class="badge {{ $statusBadgeClass[$spt->status] }}">
+                                            {{ $spt->status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Tanggal Mulai</td>
+                                    <td>:</td>
+                                    <td>{{ $spt->tanggal_mulai->format('d F Y') }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Tanggal Selesai</td>
+                                    <td>:</td>
+                                    <td>{{ $spt->tanggal_selesai->format('d F Y') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Bagian menampilkan anggota -->
-            <div class="row mb-3">
-                <div class="col-md-3 font-weight-bold">Anggota SPT</div>
-                <div class="col-md-9">
-                    @foreach($spt->users as $index => $user)
-                        <div class="mb-2">
-                            <strong>{{ $index + 1 }}. {{ $user->nama }}</strong><br>
-                            NIP: {{ $user->nip }}<br>
-                            Pangkat: {{ $user->pangkat }}<br>
-                            Jabatan: {{ $user->jabatan }}
-                        </div>
-                    @endforeach
+            <!-- Anggota SPT -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Anggota SPT</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="5%">No</th>
+                                    <th>Nama</th>
+                                    <th>NIP</th>
+                                    <th>Pangkat</th>
+                                    <th>Jabatan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($spt->users as $index => $user)
+                                    <tr>
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ $user->nama }}</td>
+                                        <td>{{ $user->nip }}</td>
+                                        <td>{{ $user->pangkat }}</td>
+                                        <td>{{ $user->jabatan }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
+
+            <!-- Dasar dan Tujuan -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Dasar dan Tujuan</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12 mb-4">
+                            <label class="form-label fw-bold">Dasar:</label>
+                            <div class="border rounded p-3">
+                                {!! $spt->dasar !!}
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Tujuan:</label>
+                            <div class="border rounded p-3">
+                                {!! $spt->tujuan !!}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Riwayat Status (Opsional) -->
+            @if($spt->status != 'Menunggu Verifikasi')
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Riwayat Status</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-success"></div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-0">Pengajuan SPT</h6>
+                                    <small class="text-muted">
+                                        {{ $spt->created_at->format('d F Y H:i') }} oleh {{ $spt->creator->nama }}
+                                    </small>
+                                </div>
+                            </div>
+                            <!-- Tambahkan riwayat status lainnya sesuai kebutuhan -->
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </div>
+
+<style>
+/* Style untuk timeline */
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-top: 5px;
+}
+
+.timeline-content {
+    padding-bottom: 15px;
+    border-bottom: 1px dashed #dee2e6;
+}
+
+.timeline-item:last-child .timeline-content {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+</style>
 @endsection

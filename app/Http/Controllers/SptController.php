@@ -5,27 +5,33 @@ namespace App\Http\Controllers;
 use App\Models\Spt;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\DocumentService;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 
 class SptController extends Controller
 {
+    protected $documentService;
+
+    public function __construct(DocumentService $documentService)
+    {
+        $this->documentService = $documentService;
+    }
+
     public function index(Request $request)
 {
     if ($request->ajax()) {
         $user = Auth::user();
         
-        // Karyawan hanya bisa melihat SPT miliknya
         if ($user->hasRole('karyawan')) {
             $query = Spt::with('users')
                       ->whereHas('users', function($q) use ($user) {
                           $q->where('users.id', $user->id);
                       });
         } else {
-            // Operator, Admin, dan Atasan bisa melihat semua
             $query = Spt::with('users');
         }
         
@@ -38,24 +44,23 @@ class SptController extends Controller
                 $btn = '<div class="btn-group" role="group">';
                 $btn .= '<a href="'.route('spts.show', $row->id).'" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a>';
                 
-                // Karyawan hanya bisa edit jika status Dikembalikan
                 if (Auth::user()->hasRole('karyawan') && $row->status == 'Dikembalikan') {
                     $btn .= '<a href="'.route('spts.edit', $row->id).'" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>';
                 }
                 
-                // Operator hanya bisa verifikasi jika status Menunggu Verifikasi
                 if (Auth::user()->hasRole('operator') && $row->status == 'Menunggu Verifikasi') {
                     $btn .= '<a href="'.route('spts.verify', $row->id).'" class="btn btn-sm btn-warning">Verifikasi</a>';
                 }
                 
-                // Atasan hanya bisa approve jika status Diverifikasi Oleh Operator
                 if (Auth::user()->hasRole('atasan') && $row->status == 'Diverifikasi Oleh Operator') {
                     $btn .= '<a href="'.route('spts.approve', $row->id).'" class="btn btn-sm btn-success">Setujui</a>';
                 }
                 
-                // Tombol cetak hanya muncul jika status Selesai
                 if ($row->status == 'Selesai') {
-                    $btn .= '<a href="'.route('spts.print', $row->id).'" class="btn btn-sm btn-secondary" target="_blank">Cetak</a>';
+                    $btn .= '<div class="btn-group">';
+                    $btn .= '<a href="'.route('spts.print', $row->id).'" class="btn btn-sm btn-secondary" target="_blank"><i class="fas fa-file-pdf"></i></a>';
+                    $btn .= '<a href="'.route('spts.export-word', $row->id).'" class="btn btn-sm btn-secondary"><i class="fas fa-file-word"></i></a>';
+                    $btn .= '</div>';
                 }
                 
                 $btn .= '</div>';
@@ -201,8 +206,24 @@ class SptController extends Controller
         // Bersihkan nomor surat untuk nama file
         $filename = 'SPT-' . str_replace(['/', '\\'], '-', $spt->nomor_surat) . '.pdf';
 
-        $pdf = Pdf::loadView('spts.print', compact('spt'));
+        $pdf = Pdf::loadView('spts.print', compact('spt'))->setPaper('a4', 'portrait');
         return $pdf->stream($filename);
+    }
+
+    public function exportWord(Spt $spt)
+    {
+        // Cek apakah user adalah pemilik SPT atau memiliki role yang bisa melihat semua
+        if (Auth::user()->hasRole('karyawan') && Auth::id() != $spt->user_id) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        // Cek apakah status SPT adalah Selesai
+        if ($spt->status != 'Selesai') {
+            return redirect()->route('spts.index')
+                           ->with('error', 'SPT tidak dapat dicetak karena status belum Selesai.');
+        }
+        
+        return $this->documentService->exportToWord($spt);
     }
 
     // API untuk mendapatkan NIP berdasarkan nama
